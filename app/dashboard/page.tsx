@@ -34,6 +34,10 @@ import {
   Layers,
   Globe,
   Lock,
+  Share2,
+  ExternalLink,
+  Check,
+  Link2,
 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 
@@ -112,6 +116,25 @@ export default function DashboardPage() {
       thumbnail_url: tour.thumbnail_url,
     })
     if (!error) fetchTours()
+  }
+
+  const handleTogglePublic = async (tourId: string, currentlyPublic: boolean) => {
+    if (!supabase) return
+    await supabase.from('tours').update({ is_public: !currentlyPublic }).eq('id', tourId)
+    fetchTours()
+  }
+
+  const [copiedTourId, setCopiedTourId] = useState<string | null>(null)
+
+  const handleCopyShareLink = async (tourId: string) => {
+    const url = `${window.location.origin}/tour/${tourId}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedTourId(tourId)
+      setTimeout(() => setCopiedTourId(null), 2000)
+    } catch {
+      /* ignore */
+    }
   }
 
   const handleDeleteTour = async () => {
@@ -264,6 +287,38 @@ export default function DashboardPage() {
                       <p className="text-xs text-muted-foreground mt-1">
                         Updated {new Date(tour.updated_at).toLocaleDateString()}
                       </p>
+                      {tour.is_public && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[11px] gap-1 px-2"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleCopyShareLink(tour.id)
+                            }}
+                          >
+                            {copiedTourId === tour.id ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <Share2 className="h-3 w-3" />
+                            )}
+                            {copiedTourId === tour.id ? 'Copied' : 'Share'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[11px] gap-1 px-2"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/tour/${tour.id}`)
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            View
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
                     <DropdownMenu>
@@ -273,17 +328,28 @@ export default function DashboardPage() {
                           <span className="sr-only">Tour options</span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onClick={() => handleEditTour(tour.id)}>
                           <Pencil className="h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         {tour.is_public && (
-                          <DropdownMenuItem onClick={() => router.push(`/viewer?id=${tour.id}`)}>
-                            <Eye className="h-4 w-4" />
-                            View tour
+                          <DropdownMenuItem onClick={() => router.push(`/tour/${tour.id}`)}>
+                            <ExternalLink className="h-4 w-4" />
+                            View public tour
                           </DropdownMenuItem>
                         )}
+                        {tour.is_public && (
+                          <DropdownMenuItem onClick={() => handleCopyShareLink(tour.id)}>
+                            {copiedTourId === tour.id ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                            {copiedTourId === tour.id ? 'Link copied!' : 'Copy share link'}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => handleTogglePublic(tour.id, tour.is_public)}>
+                          {tour.is_public ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+                          {tour.is_public ? 'Make private' : 'Make public'}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDuplicateTour(tour)}>
                           <Copy className="h-4 w-4" />
                           Duplicate

@@ -426,6 +426,43 @@ function generateStandaloneHTML(tour: Tour): string {
 </html>`
 }
 
+function generateReadme(tour: Tour): string {
+  const sceneList = tour.scenes.map((s, i) => `${i + 1}. **${s.name}** - ${s.hotspots.length} hotspot(s)`).join('\n')
+  return `# ${tour.name}
+
+${tour.description || 'A 360-degree virtual tour.'}
+
+## How to View
+
+### Option 1: Open locally
+Simply open \`index.html\` in any modern browser (Chrome, Firefox, Safari, Edge).
+
+### Option 2: Host on GitHub Pages
+1. Create a new GitHub repository
+2. Upload all files from this ZIP to the repository
+3. Go to **Settings > Pages** and set the source to the \`main\` branch
+4. Your tour will be live at \`https://YOUR-USERNAME.github.io/REPO-NAME/\`
+
+### Option 3: Host anywhere
+Upload these files to any static hosting service (Netlify, Vercel, etc.) - no server required.
+
+## Tour Contents
+
+**Scenes:**
+${sceneList}
+
+## Files
+
+- \`index.html\` - Self-contained tour viewer (loads Three.js from CDN)
+- \`data/tour.json\` - Tour configuration and hotspot data
+- \`images/\` - All panorama and hotspot images
+- \`.nojekyll\` - Required for GitHub Pages compatibility
+
+---
+*Created with [PanoraVista](https://panoravista.vercel.app)*
+`
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -507,6 +544,12 @@ export async function exportTourAsZip(
 
   // Add standalone HTML viewer
   zip.file('index.html', generateStandaloneHTML(tourCopy))
+
+  // GitHub Pages: add .nojekyll so _-prefixed files aren't ignored
+  zip.file('.nojekyll', '')
+
+  // Add a simple README
+  zip.file('README.md', generateReadme(tourCopy))
 
   // Generate ZIP
   const blob = await zip.generateAsync({
