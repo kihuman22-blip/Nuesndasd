@@ -13,6 +13,9 @@ import {
   Loader2,
   Cloud,
   CloudOff,
+  Archive,
+  Link2,
+  ExternalLink,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,7 +27,9 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
 import { useTour, exportTour, importTour } from '@/lib/tour-store'
+import { exportTourAsZip } from '@/lib/tour-export'
 import Link from 'next/link'
 
 interface EditorToolbarProps {
@@ -41,8 +46,10 @@ export default function EditorToolbar({ saving, lastSaved, onSaveNow }: EditorTo
   const [importJson, setImportJson] = useState('')
   const [copied, setCopied] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+  const [zipExporting, setZipExporting] = useState(false)
+  const [zipProgress, setZipProgress] = useState<{ label: string; percent: number } | null>(null)
 
-  const handleExport = () => {
+  const handleExportJson = () => {
     const json = exportTour()
     const blob = new Blob([json], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -51,6 +58,37 @@ export default function EditorToolbar({ saving, lastSaved, onSaveNow }: EditorTo
     a.download = `${tour?.name || 'tour'}.json`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const handleExportZip = async () => {
+    if (!tour) return
+    setZipExporting(true)
+    setZipProgress({ label: 'Preparing...', percent: 0 })
+    try {
+      const blob = await exportTourAsZip(tour, (progress) => {
+        if (progress.phase === 'downloading') {
+          const percent = Math.round((progress.current / progress.total) * 80)
+          setZipProgress({ label: progress.label, percent })
+        } else if (progress.phase === 'packaging') {
+          setZipProgress({ label: progress.label, percent: 85 })
+        } else {
+          setZipProgress({ label: progress.label, percent: 100 })
+        }
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${tour.name.toLowerCase().replace(/\s+/g, '-')}-tour.zip`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('ZIP export failed:', err)
+    } finally {
+      setTimeout(() => {
+        setZipExporting(false)
+        setZipProgress(null)
+      }, 1000)
+    }
   }
 
   const handleImport = () => {
@@ -64,7 +102,7 @@ export default function EditorToolbar({ saving, lastSaved, onSaveNow }: EditorTo
   const getTourUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const tourId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') : null
-    return tourId ? `${origin}/viewer?id=${tourId}` : `${origin}/viewer`
+    return tourId ? `${origin}/tour/${tourId}` : `${origin}/viewer`
   }
 
   const handleCopyLink = () => {
@@ -140,9 +178,19 @@ export default function EditorToolbar({ saving, lastSaved, onSaveNow }: EditorTo
             <Upload className="h-3.5 w-3.5" />
             Import
           </Button>
-          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={handleExport}>
-            <Download className="h-3.5 w-3.5" />
-            Export
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs gap-1.5"
+            onClick={handleExportZip}
+            disabled={zipExporting}
+          >
+            {zipExporting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Archive className="h-3.5 w-3.5" />
+            )}
+            {zipExporting ? 'Exporting...' : 'Export ZIP'}
           </Button>
           <Button
             variant="ghost"
@@ -170,6 +218,14 @@ export default function EditorToolbar({ saving, lastSaved, onSaveNow }: EditorTo
           </Link>
         </div>
       </div>
+
+      {/* ZIP export progress bar */}
+      {zipProgress && (
+        <div className="h-6 border-b border-border bg-card flex items-center px-3 gap-2">
+          <Progress value={zipProgress.percent} className="h-1.5 flex-1 max-w-xs" />
+          <span className="text-[10px] text-muted-foreground">{zipProgress.label}</span>
+        </div>
+      )}
 
       {/* Import Dialog */}
       <Dialog open={showImport} onOpenChange={setShowImport}>
@@ -260,19 +316,41 @@ export default function EditorToolbar({ saving, lastSaved, onSaveNow }: EditorTo
 
             {/* Export JSON */}
             <div>
-              <Label className="text-xs font-medium text-foreground">Export as JSON</Label>
+              <Label className="text-xs font-medium text-foreground">Export Tour</Label>
               <p className="text-xs text-muted-foreground mt-0.5 mb-1">
-                Download tour data to share or import later.
+                Download as a complete ZIP with standalone viewer (works offline, on GitHub Pages, etc.) or as raw JSON data.
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-1.5 text-xs gap-1.5"
-                onClick={handleExport}
-              >
-                <Download className="h-3.5 w-3.5" />
-                Download JSON
-              </Button>
+              <div className="flex flex-col gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs gap-1.5 w-full justify-start"
+                  onClick={handleExportZip}
+                  disabled={zipExporting}
+                >
+                  {zipExporting ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Archive className="h-3.5 w-3.5" />
+                  )}
+                  {zipExporting ? 'Exporting...' : 'Download as ZIP (recommended)'}
+                </Button>
+                {zipProgress && (
+                  <div className="space-y-1.5">
+                    <Progress value={zipProgress.percent} className="h-1.5" />
+                    <p className="text-[11px] text-muted-foreground">{zipProgress.label}</p>
+                  </div>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs gap-1.5 w-full justify-start text-muted-foreground"
+                  onClick={handleExportJson}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download as JSON
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
