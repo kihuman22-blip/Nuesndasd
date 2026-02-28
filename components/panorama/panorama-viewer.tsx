@@ -78,7 +78,7 @@ export default function PanoramaViewer({
     if (!container) return
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(container.clientWidth, container.clientHeight)
     renderer.outputColorSpace = THREE.SRGBColorSpace
     container.appendChild(renderer.domElement)
@@ -118,9 +118,9 @@ export default function PanoramaViewer({
     img.onload = () => {
       const tex = new THREE.Texture(img)
       tex.colorSpace = THREE.SRGBColorSpace
-      tex.minFilter = THREE.LinearFilter
+      tex.minFilter = THREE.LinearMipmapLinearFilter
       tex.magFilter = THREE.LinearFilter
-      tex.generateMipmaps = false
+      tex.generateMipmaps = true
       if (rendererRef.current) tex.anisotropy = rendererRef.current.capabilities.getMaxAnisotropy()
       tex.needsUpdate = true
 

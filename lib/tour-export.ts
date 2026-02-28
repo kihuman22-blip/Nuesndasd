@@ -201,15 +201,16 @@ function generateStandaloneHTML(tour: Tour): string {
     camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 1, 1100);
     scene = new THREE.Scene();
 
-    const geometry = new THREE.SphereGeometry(500, 60, 40);
+    const geometry = new THREE.SphereGeometry(500, 128, 80);
     geometry.scale(-1, 1, 1);
     const material = new THREE.MeshBasicMaterial();
     sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
-    renderer = new THREE.WebGLRenderer();
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.insertBefore(renderer.domElement, container.firstChild);
 
     // Controls
@@ -261,6 +262,11 @@ function generateStandaloneHTML(tour: Tour): string {
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = 'anonymous';
     loader.load(sceneData.imageUrl, function(texture) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.generateMipmaps = true;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
       sphere.material.map = texture;
       sphere.material.needsUpdate = true;
     });
