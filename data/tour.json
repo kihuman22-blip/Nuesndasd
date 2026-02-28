@@ -1,0 +1,54 @@
+{
+  "id": "1772320632441-2yhd8sltt",
+  "name": "My Virtual Tour",
+  "description": "An immersive 360 experience",
+  "scenes": [
+    {
+      "id": "1772320688695-crn8yw5b6",
+      "name": "20260227 070640 833",
+      "imageUrl": "images/scenes/20260227-070640-833.jpg",
+      "hotspots": [
+        {
+          "id": "1772320705151-jhqhcrax0",
+          "type": "info",
+          "position": {
+            "yaw": -190.80866600686912,
+            "pitch": -18.42088874977075
+          },
+          "title": "Information",
+          "icon": "info",
+          "color": "#f59e0b",
+          "description": "🍽️ Tisch reservieren im La Piazza\nHier Klicken: ( https://widget.thefork.com/de/52f4e596-0c1b-4e16-b27b-76ed8dd85680?fbclid=PAZXh0bgNhZW0CMTEAAad2ozTRXHlXnZe3rbpp07-EHCH-Ysms3OwbdWCX_YomkWhVvDTWWUtRyFv8Bw_aem_sypDhJhDdpolCRT2bJKBaQ&utm_source=l.instagram.com&step=date )\n\nSichern Sie sich Ihren Lieblingsplatz ganz bequem:\n\n\n🌐 Online reservieren:\nÜber unsere Website – schnell und unkompliziert rund um die Uhr.\n\n📞 Telefonische Reservierung:\n0471 93141450\n\nWir freuen uns auf Ihren Besuch! 🇮🇹"
+        }
+      ],
+      "initialViewDirection": {
+        "yaw": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "id": "1772320694109-etxstnhrh",
+      "name": "20260227 070632 665",
+      "imageUrl": "images/scenes/20260227-070632-665.jpg",
+      "hotspots": [],
+      "initialViewDirection": {
+        "yaw": 0,
+        "pitch": 0
+      }
+    }
+  ],
+  "startSceneId": "1772320688695-crn8yw5b6",
+  "createdAt": "2026-02-28T23:17:12.441Z",
+  "updatedAt": "2026-02-28T23:18:31.033Z",
+  "settings": {
+    "autoRotate": false,
+    "autoRotateSpeed": 0.5,
+    "showMinimap": true,
+    "showSceneList": true,
+    "transitionDuration": 800,
+    "defaultFov": 75,
+    "controlType": "drag",
+    "showCompass": true,
+    "backgroundColor": "#0a0a0a"
+  }
+}
